@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Previous head and style sections remain the same -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LED Controller</title>
+    <style>
+        /* Previous styles remain the same */
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .control-group {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .control-group h2 {
+            margin-top: 0;
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        input[type="range"] {
+            flex-grow: 1;
+        }
+        .color-picker {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <!-- Previous HTML structure remains the same -->
+    <div class="container">
+        <h1>LED Strip Controller</h1>
+        
+        <div class="control-group">
+            <h2>Connection</h2>
+            <button id="connectButton">Connect to LED Strip</button>
+            <button id="disconnectButton" disabled>Disconnect</button>
+        </div>
+
+        <div class="control-group">
+            <h2>Power Control</h2>
+            <button onclick="sendCommand('power', true)" disabled>Turn On</button>
+            <button onclick="sendCommand('power', false)" disabled>Turn Off</button>
+        </div>
+
+        <div class="control-group">
+            <h2>Color Control</h2>
+            <div class="color-picker">
+                <label>Color: </label>
+                <input type="color" id="colorPicker" onchange="updateColor()" disabled>
+                <button onclick="sendColorCommand()" disabled>Set Color</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <h2>Brightness Control</h2>
+            <div class="slider-container">
+                <label>Brightness:</label>
+                <input type="range" id="brightness" min="0" max="255" value="128" disabled>
+                <span id="brightnessValue">128</span>
+            </div>
+            <div class="slider-container">
+                <label>Intensity:</label>
+                <input type="range" id="intensity" min="0" max="15" value="7" disabled>
+                <span id="intensityValue">7</span>
+            </div>
+            <button onclick="sendBrightnessCommand()" disabled>Set Brightness</button>
+        </div>
+
+        <div class="control-group">
+            <h2>Music Mode</h2>
+            <select id="musicMode" disabled>
+                <option value="1">Classic Mode</option>
+                <option value="2">Vocal Mode</option>
+                <option value="3">Pop Mode</option>
+                <option value="4">Rock Mode</option>
+            </select>
+            <button onclick="sendMusicModeCommand()" disabled>Set Mode</button>
+        </div>
+
+        <div class="control-group">
+            <h2>Microphone Sensitivity</h2>
+            <div class="slider-container">
+                <label>Sensitivity:</label>
+                <input type="range" id="sensitivity" min="41" max="255" value="148" disabled>
+                <span id="sensitivityValue">148</span>
+            </div>
+            <div class="slider-container">
+                <label>Scaling:</label>
+                <input type="range" id="scaling" min="0" max="15" value="7" disabled>
+                <span id="scalingValue">7</span>
+            </div>
+            <button onclick="sendMicSensitivityCommand()" disabled>Set Sensitivity</button>
+        </div>
+
+        <div id="status"></div>
+    </div>
+
+    <script>
+        // Corrected UUIDs in lowercase
+        const UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+        const UART_RX_CHAR_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+        
+        let bluetoothDevice;
+        let rxCharacteristic;
+
+        // Helper function to show status messages
+        function showStatus(message, isError = false) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = isError ? 'error' : 'success';
+            console.log(`${isError ? 'Error' : 'Status'}: ${message}`); // Added logging
+        }
+
+        // Helper function to enable/disable all controls
+        function setControlsState(enabled) {
+            document.querySelectorAll('button:not(#connectButton), input, select').forEach(el => {
+                el.disabled = !enabled;
+            });
+            document.getElementById('connectButton').disabled = enabled;
+            document.getElementById('disconnectButton').disabled = !enabled;
+        }
+
+        // Connect to the LED strip
+        async function connect() {
+            try {
+                showStatus('Requesting Bluetooth device...');
+                bluetoothDevice = await navigator.bluetooth.requestDevice({
+                    filters: [{
+                        services: [UART_SERVICE_UUID]
+                    }],
+                    optionalServices: [] // Add any optional services here if needed
+                });
+
+                showStatus('Connecting to GATT server...');
+                const server = await bluetoothDevice.gatt.connect();
+                
+                showStatus('Getting primary service...');
+                const service = await server.getPrimaryService(UART_SERVICE_UUID);
+                
+                showStatus('Getting characteristic...');
+                rxCharacteristic = await service.getCharacteristic(UART_RX_CHAR_UUID);
+                
+                showStatus('Connected successfully!');
+                setControlsState(true);
+
+                bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
+            } catch (error) {
+                console.error('Connection error:', error);
+                showStatus(`Connection failed: ${error.message}`, true);
+                setControlsState(false);
+            }
+        }
+
+        // Rest of the JavaScript remains the same
+        // Disconnect from the LED strip
+        async function disconnect() {
+            if (bluetoothDevice && bluetoothDevice.gatt.connected) {
+                await bluetoothDevice.gatt.disconnect();
+            }
+        }
+
+        // Handle disconnection
+        function onDisconnected() {
+            showStatus('Device disconnected');
+            setControlsState(false);
+            rxCharacteristic = null;
+        }
+
+        // Helper function to write command to the device
+        async function writeCommand(data) {
+            if (!rxCharacteristic) {
+                throw new Error('Not connected to LED strip');
+            }
+            await rxCharacteristic.writeValue(data);
+        }
+
+        // Command functions
+        async function sendCommand(action, state) {
+            try {
+                if (action === 'power') {
+                    const command = new Uint8Array([0x5A, 0x01, 0x02, state ? 0xFF : 0x00]);
+                    await writeCommand(command);
+                    showStatus(`Power turned ${state ? 'on' : 'off'}`);
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, true);
+            }
+        }
+
+        function updateColor() {
+            const color = document.getElementById('colorPicker').value;
+            document.getElementById('colorPicker').style.backgroundColor = color;
+        }
+
+        async function sendColorCommand() {
+            try {
+                const color = document.getElementById('colorPicker').value;
+                const r = parseInt(color.substr(1,2), 16);
+                const g = parseInt(color.substr(3,2), 16);
+                const b = parseInt(color.substr(5,2), 16);
+                
+                const command = new Uint8Array([0x5A, 0x07, 0x01, r, g, b]);
+                await writeCommand(command);
+                showStatus(`Color set to RGB(${r}, ${g}, ${b})`);
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, true);
+            }
+        }
+
+        async function sendBrightnessCommand() {
+            try {
+                const brightness = parseInt(document.getElementById('brightness').value);
+                const intensity = parseInt(document.getElementById('intensity').value);
+                
+                const command = new Uint8Array([0x5A, 0x03, 0x01, brightness, intensity]);
+                await writeCommand(command);
+                showStatus(`Brightness set to ${brightness}/255, Intensity ${intensity}/15`);
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, true);
+            }
+        }
+
+        async function sendMusicModeCommand() {
+            try {
+                const mode = parseInt(document.getElementById('musicMode').value);
+                const command = new Uint8Array([0x5A, 0x09, 0x03, mode]);
+                await writeCommand(command);
+                showStatus(`Music mode set to ${document.getElementById('musicMode').options[mode-1].text}`);
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, true);
+            }
+        }
+
+        async function sendMicSensitivityCommand() {
+            try {
+                const sensitivity = parseInt(document.getElementById('sensitivity').value);
+                const scaling = parseInt(document.getElementById('scaling').value);
+                
+                const command = new Uint8Array([0x5A, 0x09, 0x01, 0x01, sensitivity, scaling]);
+                await writeCommand(command);
+                showStatus(`Mic sensitivity set to ${sensitivity}/255, Scaling ${scaling}/15`);
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, true);
+            }
+        }
+
+        // Update value displays for sliders
+        ['brightness', 'intensity', 'sensitivity', 'scaling'].forEach(id => {
+            const slider = document.getElementById(id);
+            const display = document.getElementById(id + 'Value');
+            slider.oninput = () => display.textContent = slider.value;
+        });
+
+        // Set up event listeners
+        document.getElementById('connectButton').addEventListener('click', connect);
+        document.getElementById('disconnectButton').addEventListener('click', disconnect);
+
+        // Check if Web Bluetooth is supported
+        if (!navigator.bluetooth) {
+            showStatus('Web Bluetooth is not supported in your browser. Please use Chrome, Edge, or another compatible browser.', true);
+        }
+    </script>
+</body>
+</html>
