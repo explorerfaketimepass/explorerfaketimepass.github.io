@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,32 +13,40 @@
         body {
             background-color: #f5f5f5;
         }
+
         .container {
             margin-top: 20px;
         }
+
         .card {
             margin: 10px 0;
         }
+
         .card-content {
             padding: 20px !important;
         }
+
         .status-area {
             padding: 10px;
             border-radius: 4px;
             margin: 10px 0;
         }
+
         .status-success {
             background-color: #c8e6c9;
             color: #2e7d32;
         }
+
         .status-error {
             background-color: #ffcdd2;
             color: #c62828;
         }
+
         .device-list {
             max-height: 200px;
             overflow-y: auto;
         }
+
         .device-item {
             padding: 10px;
             margin: 5px 0;
@@ -46,20 +55,25 @@
             cursor: pointer;
             transition: background-color 0.3s;
         }
+
         .device-item:hover {
             background-color: #f5f5f5;
         }
+
         .control-section {
             margin: 15px 0;
         }
+
         .mode-btn {
             margin: 5px;
         }
+
         .slider-label {
             font-size: 1rem;
             color: #666;
             margin-bottom: 5px;
         }
+
         .color-preview {
             width: 50px;
             height: 50px;
@@ -67,14 +81,41 @@
             margin: 10px;
             border: 2px solid #ddd;
         }
+
+        .color-presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .color-preset {
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            cursor: pointer;
+            border: 2px solid #ddd;
+            transition: transform 0.2s;
+        }
+
+        .color-preset:hover {
+            transform: scale(1.1);
+        }
+
+        .preset-manager {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="row">
             <div class="col s12">
                 <h3 class="center-align">LED Strip Controller</h3>
-                
+
                 <!-- Connection Card -->
                 <div class="card">
                     <div class="card-content">
@@ -106,10 +147,12 @@
                         <span class="card-title">Power Control</span>
                         <div class="row">
                             <div class="col s12 center-align">
-                                <button class="btn-large waves-effect waves-light green" onclick="sendCommand('power', true)" disabled>
+                                <button class="btn-large waves-effect waves-light green"
+                                    onclick="sendCommand('power', true)" disabled>
                                     <i class="material-icons left">power</i>Turn On
                                 </button>
-                                <button class="btn-large waves-effect waves-light red" onclick="sendCommand('power', false)" disabled>
+                                <button class="btn-large waves-effect waves-light red"
+                                    onclick="sendCommand('power', false)" disabled>
                                     <i class="material-icons left">power_off</i>Turn Off
                                 </button>
                             </div>
@@ -122,6 +165,9 @@
                     <div class="card-content">
                         <span class="card-title">Color Control</span>
                         <div class="row">
+                            <div class="col s12">
+                                <div class="color-presets" id="colorPresets"></div>
+                            </div>
                             <div class="col s12 m6">
                                 <div class="color-preview" id="colorPreview"></div>
                                 <input type="color" id="colorPicker" onchange="updateColor()" disabled>
@@ -131,29 +177,33 @@
                                     <i class="material-icons left">color_lens</i>Set Color
                                 </button>
                             </div>
+                            <div class="col s12 preset-manager">
+                                <div class="input-field">
+                                    <input type="text" id="presetName" placeholder="Preset Name">
+                                </div>
+                                <button class="btn waves-effect waves-light" onclick="saveCurrentColorPreset()"
+                                    disabled>
+                                    <i class="material-icons left">save</i>Save Current Color as Preset
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Brightness Control Card -->
+                <!-- Combined Brightness & Intensity Control Card -->
                 <div class="card">
                     <div class="card-content">
-                        <span class="card-title">Brightness & Intensity Control</span>
+                        <span class="card-title">Brightness Control</span>
                         <div class="row">
                             <div class="col s12">
-                                <p class="slider-label">Brightness: <span id="brightnessValue">128</span></p>
+                                <p class="slider-label">Brightness: <span id="combinedBrightnessValue">50</span>%</p>
                                 <p class="range-field">
-                                    <input type="range" id="brightness" min="0" max="255" value="128" disabled />
+                                    <input type="range" id="combinedBrightness" min="0" max="100" value="50" disabled />
                                 </p>
                             </div>
                             <div class="col s12">
-                                <p class="slider-label">Intensity: <span id="intensityValue">7</span></p>
-                                <p class="range-field">
-                                    <input type="range" id="intensity" min="0" max="15" value="7" disabled />
-                                </p>
-                            </div>
-                            <div class="col s12">
-                                <button class="btn waves-effect waves-light" onclick="sendBrightnessCommand()" disabled>
+                                <button class="btn waves-effect waves-light" onclick="sendCombinedBrightnessCommand()"
+                                    disabled>
                                     <i class="material-icons left">brightness_medium</i>Set Brightness
                                 </button>
                             </div>
@@ -167,16 +217,20 @@
                         <span class="card-title">Music Mode Control</span>
                         <div class="row">
                             <div class="col s12 center-align">
-                                <button class="btn waves-effect waves-light mode-btn" onclick="setMusicMode(1)" disabled>
+                                <button class="btn waves-effect waves-light mode-btn" onclick="setMusicMode(1)"
+                                    disabled>
                                     Classic Mode
                                 </button>
-                                <button class="btn waves-effect waves-light mode-btn" onclick="setMusicMode(2)" disabled>
+                                <button class="btn waves-effect waves-light mode-btn" onclick="setMusicMode(2)"
+                                    disabled>
                                     Vocal Mode
                                 </button>
-                                <button class="btn waves-effect waves-light mode-btn" onclick="setMusicMode(3)" disabled>
+                                <button class="btn waves-effect waves-light mode-btn" onclick="setMusicMode(3)"
+                                    disabled>
                                     Pop Mode
                                 </button>
-                                <button class="btn waves-effect waves-light mode-btn" onclick="setMusicMode(4)" disabled>
+                                <button class="btn waves-effect waves-light mode-btn" onclick="setMusicMode(4)"
+                                    disabled>
                                     Rock Mode
                                 </button>
                             </div>
@@ -184,25 +238,21 @@
                     </div>
                 </div>
 
-                <!-- Mic Sensitivity Control Card -->
+                <!-- Combined Microphone Sensitivity Control Card -->
                 <div class="card">
                     <div class="card-content">
                         <span class="card-title">Microphone Sensitivity</span>
                         <div class="row">
                             <div class="col s12">
-                                <p class="slider-label">Base Sensitivity: <span id="sensitivityValue">183</span></p>
+                                <p class="slider-label">Sensitivity: <span id="combinedSensitivityValue">50</span>%</p>
                                 <p class="range-field">
-                                    <input type="range" id="sensitivity" min="41" max="255" value="183" disabled />
+                                    <input type="range" id="combinedSensitivity" min="0" max="100" value="50"
+                                        disabled />
                                 </p>
                             </div>
                             <div class="col s12">
-                                <p class="slider-label">Scaling Factor: <span id="scalingValue">7</span></p>
-                                <p class="range-field">
-                                    <input type="range" id="scaling" min="0" max="15" value="7" disabled />
-                                </p>
-                            </div>
-                            <div class="col s12">
-                                <button class="btn waves-effect waves-light" onclick="setSensitivity()" disabled>
+                                <button class="btn waves-effect waves-light" onclick="sendCombinedSensitivityCommand()"
+                                    disabled>
                                     <i class="material-icons left">mic</i>Set Sensitivity
                                 </button>
                             </div>
@@ -215,21 +265,81 @@
         </div>
     </div>
 
-    <!-- Materialize JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-    
+
     <script>
         const UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
         const UART_RX_CHAR_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
-        
+
         let bluetoothDevice;
         let rxCharacteristic;
         let isScanning = false;
 
-        // Initialize Materialize components
-        document.addEventListener('DOMContentLoaded', function() {
-            M.updateTextFields();
-        });
+        // Default color presets
+        const defaultPresets = {
+            'Warm White': '#FFE8CC',
+            'Cool White': '#F5F5F5',
+            'Red': '#FF0000',
+            'Green': '#00FF00',
+            'Blue': '#0000FF',
+            'Purple': '#800080',
+            'Orange': '#FFA500',
+            'Pink': '#FFC0CB'
+        };
+
+        // Load color presets from localStorage or use defaults
+        function loadColorPresets() {
+            let presets = { ...defaultPresets };
+            const savedPresets = localStorage.getItem('colorPresets');
+            if (savedPresets) {
+                presets = { ...presets, ...JSON.parse(savedPresets) };
+            }
+            return presets;
+        }
+
+        // Save custom color preset
+        function saveCurrentColorPreset() {
+            const name = document.getElementById('presetName').value.trim();
+            const color = document.getElementById('colorPicker').value;
+
+            if (!name) {
+                showStatus('Please enter a preset name', true);
+                return;
+            }
+
+            const presets = loadColorPresets();
+            presets[name] = color;
+            localStorage.setItem('colorPresets', JSON.stringify(presets));
+
+            updateColorPresets();
+            document.getElementById('presetName').value = '';
+            showStatus(`Saved color preset: ${name}`);
+        }
+
+        // Update color presets display
+        function updateColorPresets() {
+            const presetsContainer = document.getElementById('colorPresets');
+            presetsContainer.innerHTML = '';
+
+            const presets = loadColorPresets();
+            Object.entries(presets).forEach(([name, color]) => {
+                const preset = document.createElement('div');
+                preset.className = 'color-preset tooltipped';
+                preset.style.backgroundColor = color;
+                preset.setAttribute('data-position', 'top');
+                preset.setAttribute('data-tooltip', name);
+                preset.onclick = () => {
+                    document.getElementById('colorPicker').value = color;
+                    updateColor();
+                    sendColorCommand();
+                };
+                presetsContainer.appendChild(preset);
+            });
+
+            // Initialize tooltips
+            M.Tooltip.init(document.querySelectorAll('.tooltipped'));
+        }
+
 
         function showStatus(message, isError = false) {
             const status = document.getElementById('status');
@@ -251,15 +361,15 @@
             deviceList.innerHTML = '';
             isScanning = true;
             document.getElementById('scanButton').disabled = true;
-            
+
             try {
                 showStatus('Scanning for Bluetooth devices...');
-                
+
                 const device = await navigator.bluetooth.requestDevice({
                     acceptAllDevices: true,
                     optionalServices: [UART_SERVICE_UUID]
                 });
-                
+
                 const deviceElement = document.createElement('div');
                 deviceElement.className = 'device-item';
                 deviceElement.innerHTML = `
@@ -268,7 +378,7 @@
                 `;
                 deviceElement.addEventListener('click', () => connectToDevice(device));
                 deviceList.appendChild(deviceElement);
-                
+
                 showStatus('Scan complete');
             } catch (error) {
                 showStatus(`Scanning failed: ${error.message}`, true);
@@ -280,10 +390,10 @@
 
         async function connectToMac() {
             const macAddress = document.getElementById('macAddress').value.toLowerCase();
-            
+
             try {
                 showStatus(`Attempting to connect to device: ${macAddress}`);
-                
+
                 bluetoothDevice = await navigator.bluetooth.requestDevice({
                     filters: [{
                         services: [UART_SERVICE_UUID]
@@ -301,16 +411,16 @@
             try {
                 showStatus('Connecting to GATT server...');
                 const server = await device.gatt.connect();
-                
+
                 showStatus('Getting primary service...');
                 const service = await server.getPrimaryService(UART_SERVICE_UUID);
-                
+
                 showStatus('Getting characteristic...');
                 rxCharacteristic = await service.getCharacteristic(UART_RX_CHAR_UUID);
-                
+
                 showStatus('Connected successfully!');
                 setControlsState(true);
-                
+
                 device.addEventListener('gattserverdisconnected', onDisconnected);
                 bluetoothDevice = device;
             } catch (error) {
@@ -358,10 +468,10 @@
         async function sendColorCommand() {
             try {
                 const color = document.getElementById('colorPicker').value;
-                const r = parseInt(color.substr(1,2), 16);
-                const g = parseInt(color.substr(3,2), 16);
-                const b = parseInt(color.substr(5,2), 16);
-                
+                const r = parseInt(color.substr(1, 2), 16);
+                const g = parseInt(color.substr(3, 2), 16);
+                const b = parseInt(color.substr(5, 2), 16);
+
                 const command = new Uint8Array([0x5A, 0x07, 0x01, r, g, b]);
                 await writeCommand(command);
                 showStatus(`Color set to RGB(${r}, ${g}, ${b})`);
@@ -370,20 +480,24 @@
             }
         }
 
-        async function sendBrightnessCommand() {
+        // Combined brightness handler
+        function sendCombinedBrightnessCommand() {
             try {
-                const brightness = parseInt(document.getElementById('brightness').value);
-                const intensity = parseInt(document.getElementById('intensity').value);
-                
+                const combinedValue = parseInt(document.getElementById('combinedBrightness').value);
+
+                // Convert percentage to actual values
+                const brightness = Math.round((combinedValue / 100) * 255);
+                const intensity = Math.round((combinedValue / 100) * 15);
+
                 const command = new Uint8Array([0x5A, 0x03, 0x01, brightness, intensity]);
-                await writeCommand(command);
-                showStatus(`Brightness set to ${brightness}/255, Intensity ${intensity}/15`);
+                writeCommand(command);
+                showStatus(`Combined brightness set to ${combinedValue}%`);
             } catch (error) {
                 showStatus(`Error: ${error.message}`, true);
             }
         }
 
-async function setMusicMode(mode) {
+        async function setMusicMode(mode) {
             try {
                 const command = new Uint8Array([0x5A, 0x09, 0x03, mode]);
                 await writeCommand(command);
@@ -403,68 +517,48 @@ async function setMusicMode(mode) {
             return modes[mode] || 'Unknown';
         }
 
-        async function setSensitivity() {
+        // Combined sensitivity handler
+        function sendCombinedSensitivityCommand() {
             try {
-                const sensitivity = parseInt(document.getElementById('sensitivity').value);
-                const scaling = parseInt(document.getElementById('scaling').value);
-                
+                const combinedValue = parseInt(document.getElementById('combinedSensitivity').value);
+
+                // Convert percentage to actual values
+                const sensitivity = Math.round(41 + (combinedValue / 100) * (255 - 41)); // Scale to 41-255 range
+                const scaling = Math.round((combinedValue / 100) * 15);
+
                 const command = new Uint8Array([0x5A, 0x09, 0x01, sensitivity, scaling]);
-                await writeCommand(command);
-                showStatus(`Mic sensitivity set to ${sensitivity}/255, Scaling ${scaling}/15`);
+                writeCommand(command);
+                showStatus(`Combined sensitivity set to ${combinedValue}%`);
             } catch (error) {
                 showStatus(`Error: ${error.message}`, true);
             }
         }
 
-        // Quick sensitivity presets
-        async function setPresetSensitivity(level) {
-            const presets = {
-                'max': { sensitivity: 0xFF, scaling: 0x0F },
-                'high': { sensitivity: 0xB7, scaling: 0x0E },
-                'medium': { sensitivity: 0x84, scaling: 0x0F },
-                'min': { sensitivity: 0x29, scaling: 0x00 }
-            };
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', function () {
+            M.updateTextFields();
 
-            if (presets[level]) {
-                document.getElementById('sensitivity').value = presets[level].sensitivity;
-                document.getElementById('scaling').value = presets[level].scaling;
-                document.getElementById('sensitivityValue').textContent = presets[level].sensitivity;
-                document.getElementById('scalingValue').textContent = presets[level].scaling;
-                await setSensitivity();
-            }
-        }
+            // Initialize color presets
+            updateColorPresets();
 
-        // Event Listeners
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize event listeners for buttons
-            document.getElementById('scanButton').addEventListener('click', scanForDevices);
-            document.getElementById('connectButton').addEventListener('click', connectToMac);
-            document.getElementById('disconnectButton').addEventListener('click', disconnect);
-
-            // Initialize sliders with Materialize
-            const sliders = document.querySelectorAll('input[type=range]');
-            M.Range.init(sliders);
-
-            // Add event listeners for value displays
-            const sliderConfig = {
-                'brightness': { display: 'brightnessValue', max: 255 },
-                'intensity': { display: 'intensityValue', max: 15 },
-                'sensitivity': { display: 'sensitivityValue', max: 255 },
-                'scaling': { display: 'scalingValue', max: 15 }
-            };
-
-            Object.entries(sliderConfig).forEach(([sliderId, config]) => {
-                const slider = document.getElementById(sliderId);
-                const display = document.getElementById(config.display);
-                slider.addEventListener('input', () => {
-                    display.textContent = slider.value;
-                });
+            // Initialize combined brightness slider
+            const combinedBrightness = document.getElementById('combinedBrightness');
+            const combinedBrightnessValue = document.getElementById('combinedBrightnessValue');
+            combinedBrightness.addEventListener('input', () => {
+                combinedBrightnessValue.textContent = combinedBrightness.value;
             });
 
-            // Initialize color picker and preview
+            // Initialize combined sensitivity slider
+            const combinedSensitivity = document.getElementById('combinedSensitivity');
+            const combinedSensitivityValue = document.getElementById('combinedSensitivityValue');
+            combinedSensitivity.addEventListener('input', () => {
+                combinedSensitivityValue.textContent = combinedSensitivity.value;
+            });
+
+            // Initialize color picker
             const colorPicker = document.getElementById('colorPicker');
-            colorPicker.value = '#ff0000'; // Set initial color
-            updateColor(); // Update color preview
+            colorPicker.value = '#ff0000';
+            updateColor();
 
             // Check Web Bluetooth support
             if (!navigator.bluetooth) {
@@ -472,71 +566,62 @@ async function setMusicMode(mode) {
                 setControlsState(false);
             }
 
-            // Add tooltips to buttons
-            document.querySelectorAll('.btn, .btn-large').forEach(btn => {
-                if (btn.textContent.trim()) {
-                    M.Tooltip.init(btn, {
-                        position: 'top',
-                        html: btn.textContent.trim()
-                    });
+            // Initialize event listeners
+            document.getElementById('scanButton').addEventListener('click', scanForDevices);
+            document.getElementById('connectButton').addEventListener('click', connectToMac);
+            document.getElementById('disconnectButton').addEventListener('click', disconnect);
+
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', function (event) {
+                if (!rxCharacteristic) return; // Only process if connected
+
+                switch (event.key.toLowerCase()) {
+                    case 'o': // Toggle power
+                        if (event.ctrlKey) {
+                            sendCommand('power', true);
+                        }
+                        break;
+                    case 'f': // Toggle power off
+                        if (event.ctrlKey) {
+                            sendCommand('power', false);
+                        }
+                        break;
+                    case 'm': // Cycle through music modes
+                        if (event.ctrlKey) {
+                            const currentMode = (parseInt(localStorage.getItem('currentMusicMode') || '0') % 4) + 1;
+                            setMusicMode(currentMode);
+                            localStorage.setItem('currentMusicMode', currentMode);
+                        }
+                        break;
                 }
             });
-        });
 
-        // Helper function to format values as hex
-        function toHex(value) {
-            return value.toString(16).padStart(2, '0').toUpperCase();
-        }
+            // Initialize tooltips
+            M.Tooltip.init(document.querySelectorAll('.tooltipped'));
 
-        // Add keyboard shortcuts
-        document.addEventListener('keydown', function(event) {
-            if (!rxCharacteristic) return; // Only process if connected
-            
-            switch(event.key.toLowerCase()) {
-                case 'o': // Toggle power
-                    if (event.ctrlKey) {
-                        sendCommand('power', true);
-                    }
-                    break;
-                case 'f': // Toggle power off
-                    if (event.ctrlKey) {
-                        sendCommand('power', false);
-                    }
-                    break;
-                case 'm': // Cycle through music modes
-                    if (event.ctrlKey) {
-                        const currentMode = (parseInt(localStorage.getItem('currentMusicMode') || '0') % 4) + 1;
-                        setMusicMode(currentMode);
-                        localStorage.setItem('currentMusicMode', currentMode);
-                    }
-                    break;
-            }
-        });
+            // Initialize floating action button
+            const fab = document.createElement('div');
+            fab.className = 'fixed-action-btn';
+            fab.innerHTML = `
+                <a class="btn-floating btn-large red">
+                    <i class="large material-icons">menu</i>
+                </a>
+                <ul>
+                    <li><a class="btn-floating red" onclick="sendCommand('power', true)"><i class="material-icons">power</i></a></li>
+                    <li><a class="btn-floating yellow darken-1" onclick="sendCommand('power', false)"><i class="material-icons">power_off</i></a></li>
+                    <li><a class="btn-floating green" onclick="document.getElementById('colorPicker').click()"><i class="material-icons">color_lens</i></a></li>
+                    <li><a class="btn-floating blue" onclick="setMusicMode(1)"><i class="material-icons">music_note</i></a></li>
+                </ul>
+            `;
+            document.body.appendChild(fab);
 
-        // Add floating action button for quick actions
-        const fab = document.createElement('div');
-        fab.className = 'fixed-action-btn';
-        fab.innerHTML = `
-            <a class="btn-floating btn-large red">
-                <i class="large material-icons">menu</i>
-            </a>
-            <ul>
-                <li><a class="btn-floating red" onclick="sendCommand('power', true)"><i class="material-icons">power</i></a></li>
-                <li><a class="btn-floating yellow darken-1" onclick="sendCommand('power', false)"><i class="material-icons">power_off</i></a></li>
-                <li><a class="btn-floating green" onclick="document.getElementById('colorPicker').click()"><i class="material-icons">color_lens</i></a></li>
-                <li><a class="btn-floating blue" onclick="setMusicMode(1)"><i class="material-icons">music_note</i></a></li>
-            </ul>
-        `;
-        document.body.appendChild(fab);
-
-        // Initialize floating action button
-        document.addEventListener('DOMContentLoaded', function() {
-            const elems = document.querySelectorAll('.fixed-action-btn');
-            M.FloatingActionButton.init(elems, {
+            // Initialize floating action button
+            M.FloatingActionButton.init(document.querySelectorAll('.fixed-action-btn'), {
                 direction: 'left',
                 hoverEnabled: false
             });
         });
     </script>
 </body>
+
 </html>
