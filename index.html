@@ -1,185 +1,306 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LED Controller</title>
+    <!-- Materialize CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-        /* Previous styles remain the same */
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f0f0f0;
+            background-color: #f5f5f5;
         }
         .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .control-group {
-            margin-bottom: 20px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        .control-group h2 {
-            margin-top: 0;
-        }
-        .slider-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        input[type="range"] {
-            flex-grow: 1;
-        }
-        .color-picker {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            background-color: #007bff;
-            color: white;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-        #status {
             margin-top: 20px;
+        }
+        .card {
+            margin: 10px 0;
+        }
+        .card-content {
+            padding: 20px !important;
+        }
+        .status-area {
             padding: 10px;
-            border-radius: 5px;
+            border-radius: 4px;
+            margin: 10px 0;
         }
-        .success {
-            background-color: #d4edda;
-            color: #155724;
+        .status-success {
+            background-color: #c8e6c9;
+            color: #2e7d32;
         }
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
+        .status-error {
+            background-color: #ffcdd2;
+            color: #c62828;
+        }
+        .device-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .device-item {
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .device-item:hover {
+            background-color: #f5f5f5;
+        }
+        .control-section {
+            margin: 15px 0;
+        }
+        .mode-btn {
+            margin: 5px;
+        }
+        .slider-label {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .color-preview {
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            margin: 10px;
+            border: 2px solid #ddd;
         }
     </style>
 </head>
 <body>
-    <!-- Previous HTML structure remains the same -->
     <div class="container">
-        <h1>LED Strip Controller</h1>
-        
-        <div class="control-group">
-            <h2>Connection</h2>
-            <button id="connectButton">Connect to LED Strip</button>
-            <button id="disconnectButton" disabled>Disconnect</button>
-        </div>
+        <div class="row">
+            <div class="col s12">
+                <h3 class="center-align">LED Strip Controller</h3>
+                
+                <!-- Connection Card -->
+                <div class="card">
+                    <div class="card-content">
+                        <span class="card-title">Connection</span>
+                        <div class="row">
+                            <div class="input-field col s12 m6">
+                                <input type="text" id="macAddress" value="08:14:13:05:3B:A0">
+                                <label for="macAddress">MAC Address</label>
+                            </div>
+                            <div class="col s12 m6">
+                                <button class="btn waves-effect waves-light" id="scanButton">
+                                    <i class="material-icons left">bluetooth_searching</i>Scan
+                                </button>
+                                <button class="btn waves-effect waves-light" id="connectButton">
+                                    <i class="material-icons left">bluetooth_connected</i>Connect
+                                </button>
+                                <button class="btn waves-effect waves-light red" id="disconnectButton" disabled>
+                                    <i class="material-icons left">bluetooth_disabled</i>Disconnect
+                                </button>
+                            </div>
+                        </div>
+                        <div id="deviceList" class="device-list"></div>
+                    </div>
+                </div>
 
-        <div class="control-group">
-            <h2>Power Control</h2>
-            <button onclick="sendCommand('power', true)" disabled>Turn On</button>
-            <button onclick="sendCommand('power', false)" disabled>Turn Off</button>
-        </div>
+                <!-- Power Control Card -->
+                <div class="card">
+                    <div class="card-content">
+                        <span class="card-title">Power Control</span>
+                        <div class="row">
+                            <div class="col s12 center-align">
+                                <button class="btn-large waves-effect waves-light green" onclick="sendCommand('power', true)" disabled>
+                                    <i class="material-icons left">power</i>Turn On
+                                </button>
+                                <button class="btn-large waves-effect waves-light red" onclick="sendCommand('power', false)" disabled>
+                                    <i class="material-icons left">power_off</i>Turn Off
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-        <div class="control-group">
-            <h2>Color Control</h2>
-            <div class="color-picker">
-                <label>Color: </label>
-                <input type="color" id="colorPicker" onchange="updateColor()" disabled>
-                <button onclick="sendColorCommand()" disabled>Set Color</button>
+                <!-- Color Control Card -->
+                <div class="card">
+                    <div class="card-content">
+                        <span class="card-title">Color Control</span>
+                        <div class="row">
+                            <div class="col s12 m6">
+                                <div class="color-preview" id="colorPreview"></div>
+                                <input type="color" id="colorPicker" onchange="updateColor()" disabled>
+                            </div>
+                            <div class="col s12 m6">
+                                <button class="btn waves-effect waves-light" onclick="sendColorCommand()" disabled>
+                                    <i class="material-icons left">color_lens</i>Set Color
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Brightness Control Card -->
+                <div class="card">
+                    <div class="card-content">
+                        <span class="card-title">Brightness & Intensity Control</span>
+                        <div class="row">
+                            <div class="col s12">
+                                <p class="slider-label">Brightness: <span id="brightnessValue">128</span></p>
+                                <p class="range-field">
+                                    <input type="range" id="brightness" min="0" max="255" value="128" disabled />
+                                </p>
+                            </div>
+                            <div class="col s12">
+                                <p class="slider-label">Intensity: <span id="intensityValue">7</span></p>
+                                <p class="range-field">
+                                    <input type="range" id="intensity" min="0" max="15" value="7" disabled />
+                                </p>
+                            </div>
+                            <div class="col s12">
+                                <button class="btn waves-effect waves-light" onclick="sendBrightnessCommand()" disabled>
+                                    <i class="material-icons left">brightness_medium</i>Set Brightness
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Music Mode Control Card -->
+                <div class="card">
+                    <div class="card-content">
+                        <span class="card-title">Music Mode Control</span>
+                        <div class="row">
+                            <div class="col s12 center-align">
+                                <button class="btn waves-effect waves-light mode-btn" onclick="setMusicMode(1)" disabled>
+                                    Classic Mode
+                                </button>
+                                <button class="btn waves-effect waves-light mode-btn" onclick="setMusicMode(2)" disabled>
+                                    Vocal Mode
+                                </button>
+                                <button class="btn waves-effect waves-light mode-btn" onclick="setMusicMode(3)" disabled>
+                                    Pop Mode
+                                </button>
+                                <button class="btn waves-effect waves-light mode-btn" onclick="setMusicMode(4)" disabled>
+                                    Rock Mode
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mic Sensitivity Control Card -->
+                <div class="card">
+                    <div class="card-content">
+                        <span class="card-title">Microphone Sensitivity</span>
+                        <div class="row">
+                            <div class="col s12">
+                                <p class="slider-label">Base Sensitivity: <span id="sensitivityValue">183</span></p>
+                                <p class="range-field">
+                                    <input type="range" id="sensitivity" min="41" max="255" value="183" disabled />
+                                </p>
+                            </div>
+                            <div class="col s12">
+                                <p class="slider-label">Scaling Factor: <span id="scalingValue">7</span></p>
+                                <p class="range-field">
+                                    <input type="range" id="scaling" min="0" max="15" value="7" disabled />
+                                </p>
+                            </div>
+                            <div class="col s12">
+                                <button class="btn waves-effect waves-light" onclick="setSensitivity()" disabled>
+                                    <i class="material-icons left">mic</i>Set Sensitivity
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="status" class="status-area"></div>
             </div>
         </div>
-
-        <div class="control-group">
-            <h2>Brightness Control</h2>
-            <div class="slider-container">
-                <label>Brightness:</label>
-                <input type="range" id="brightness" min="0" max="255" value="128" disabled>
-                <span id="brightnessValue">128</span>
-            </div>
-            <div class="slider-container">
-                <label>Intensity:</label>
-                <input type="range" id="intensity" min="0" max="15" value="7" disabled>
-                <span id="intensityValue">7</span>
-            </div>
-            <button onclick="sendBrightnessCommand()" disabled>Set Brightness</button>
-        </div>
-
-        <div class="control-group">
-            <h2>Music Mode</h2>
-            <select id="musicMode" disabled>
-                <option value="1">Classic Mode</option>
-                <option value="2">Vocal Mode</option>
-                <option value="3">Pop Mode</option>
-                <option value="4">Rock Mode</option>
-            </select>
-            <button onclick="sendMusicModeCommand()" disabled>Set Mode</button>
-        </div>
-
-        <div class="control-group">
-            <h2>Microphone Sensitivity</h2>
-            <div class="slider-container">
-                <label>Sensitivity:</label>
-                <input type="range" id="sensitivity" min="41" max="255" value="148" disabled>
-                <span id="sensitivityValue">148</span>
-            </div>
-            <div class="slider-container">
-                <label>Scaling:</label>
-                <input type="range" id="scaling" min="0" max="15" value="7" disabled>
-                <span id="scalingValue">7</span>
-            </div>
-            <button onclick="sendMicSensitivityCommand()" disabled>Set Sensitivity</button>
-        </div>
-
-        <div id="status"></div>
     </div>
 
+    <!-- Materialize JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    
     <script>
-        // Corrected UUIDs in lowercase
         const UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
         const UART_RX_CHAR_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
         
         let bluetoothDevice;
         let rxCharacteristic;
+        let isScanning = false;
 
-        // Helper function to show status messages
+        // Initialize Materialize components
+        document.addEventListener('DOMContentLoaded', function() {
+            M.updateTextFields();
+        });
+
         function showStatus(message, isError = false) {
             const status = document.getElementById('status');
             status.textContent = message;
-            status.className = isError ? 'error' : 'success';
-            console.log(`${isError ? 'Error' : 'Status'}: ${message}`); // Added logging
+            status.className = `status-area ${isError ? 'status-error' : 'status-success'}`;
+            console.log(`${isError ? 'Error' : 'Status'}: ${message}`);
         }
 
-        // Helper function to enable/disable all controls
         function setControlsState(enabled) {
-            document.querySelectorAll('button:not(#connectButton), input, select').forEach(el => {
+            document.querySelectorAll('button:not(#scanButton):not(#connectButton), input, select').forEach(el => {
                 el.disabled = !enabled;
             });
-            document.getElementById('connectButton').disabled = enabled;
             document.getElementById('disconnectButton').disabled = !enabled;
+            document.getElementById('scanButton').disabled = isScanning;
         }
 
-        // Connect to the LED strip
-        async function connect() {
+        async function scanForDevices() {
+            const deviceList = document.getElementById('deviceList');
+            deviceList.innerHTML = '';
+            isScanning = true;
+            document.getElementById('scanButton').disabled = true;
+            
             try {
-                showStatus('Requesting Bluetooth device...');
+                showStatus('Scanning for Bluetooth devices...');
+                
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: [UART_SERVICE_UUID]
+                });
+                
+                const deviceElement = document.createElement('div');
+                deviceElement.className = 'device-item';
+                deviceElement.innerHTML = `
+                    <div>${device.name || 'Unnamed Device'}</div>
+                    <div class="grey-text">ID: ${device.id}</div>
+                `;
+                deviceElement.addEventListener('click', () => connectToDevice(device));
+                deviceList.appendChild(deviceElement);
+                
+                showStatus('Scan complete');
+            } catch (error) {
+                showStatus(`Scanning failed: ${error.message}`, true);
+            } finally {
+                isScanning = false;
+                document.getElementById('scanButton').disabled = false;
+            }
+        }
+
+        async function connectToMac() {
+            const macAddress = document.getElementById('macAddress').value.toLowerCase();
+            
+            try {
+                showStatus(`Attempting to connect to device: ${macAddress}`);
+                
                 bluetoothDevice = await navigator.bluetooth.requestDevice({
                     filters: [{
                         services: [UART_SERVICE_UUID]
-                    }],
-                    optionalServices: [] // Add any optional services here if needed
+                    }]
                 });
 
+                await connectToDevice(bluetoothDevice);
+            } catch (error) {
+                showStatus(`Connection failed: ${error.message}`, true);
+                setControlsState(false);
+            }
+        }
+
+        async function connectToDevice(device) {
+            try {
                 showStatus('Connecting to GATT server...');
-                const server = await bluetoothDevice.gatt.connect();
+                const server = await device.gatt.connect();
                 
                 showStatus('Getting primary service...');
                 const service = await server.getPrimaryService(UART_SERVICE_UUID);
@@ -189,31 +310,27 @@
                 
                 showStatus('Connected successfully!');
                 setControlsState(true);
-
-                bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
+                
+                device.addEventListener('gattserverdisconnected', onDisconnected);
+                bluetoothDevice = device;
             } catch (error) {
-                console.error('Connection error:', error);
                 showStatus(`Connection failed: ${error.message}`, true);
                 setControlsState(false);
             }
         }
 
-        // Rest of the JavaScript remains the same
-        // Disconnect from the LED strip
         async function disconnect() {
             if (bluetoothDevice && bluetoothDevice.gatt.connected) {
                 await bluetoothDevice.gatt.disconnect();
             }
         }
 
-        // Handle disconnection
         function onDisconnected() {
             showStatus('Device disconnected');
             setControlsState(false);
             rxCharacteristic = null;
         }
 
-        // Helper function to write command to the device
         async function writeCommand(data) {
             if (!rxCharacteristic) {
                 throw new Error('Not connected to LED strip');
@@ -221,7 +338,6 @@
             await rxCharacteristic.writeValue(data);
         }
 
-        // Command functions
         async function sendCommand(action, state) {
             try {
                 if (action === 'power') {
@@ -236,7 +352,7 @@
 
         function updateColor() {
             const color = document.getElementById('colorPicker').value;
-            document.getElementById('colorPicker').style.backgroundColor = color;
+            document.getElementById('colorPreview').style.backgroundColor = color;
         }
 
         async function sendColorCommand() {
@@ -267,23 +383,32 @@
             }
         }
 
-        async function sendMusicModeCommand() {
+async function setMusicMode(mode) {
             try {
-                const mode = parseInt(document.getElementById('musicMode').value);
                 const command = new Uint8Array([0x5A, 0x09, 0x03, mode]);
                 await writeCommand(command);
-                showStatus(`Music mode set to ${document.getElementById('musicMode').options[mode-1].text}`);
+                showStatus(`Music mode set to ${getMusicModeName(mode)}`);
             } catch (error) {
                 showStatus(`Error: ${error.message}`, true);
             }
         }
 
-        async function sendMicSensitivityCommand() {
+        function getMusicModeName(mode) {
+            const modes = {
+                1: 'Classic',
+                2: 'Vocal',
+                3: 'Pop',
+                4: 'Rock'
+            };
+            return modes[mode] || 'Unknown';
+        }
+
+        async function setSensitivity() {
             try {
                 const sensitivity = parseInt(document.getElementById('sensitivity').value);
                 const scaling = parseInt(document.getElementById('scaling').value);
                 
-                const command = new Uint8Array([0x5A, 0x09, 0x01, 0x01, sensitivity, scaling]);
+                const command = new Uint8Array([0x5A, 0x09, 0x01, sensitivity, scaling]);
                 await writeCommand(command);
                 showStatus(`Mic sensitivity set to ${sensitivity}/255, Scaling ${scaling}/15`);
             } catch (error) {
@@ -291,21 +416,127 @@
             }
         }
 
-        // Update value displays for sliders
-        ['brightness', 'intensity', 'sensitivity', 'scaling'].forEach(id => {
-            const slider = document.getElementById(id);
-            const display = document.getElementById(id + 'Value');
-            slider.oninput = () => display.textContent = slider.value;
+        // Quick sensitivity presets
+        async function setPresetSensitivity(level) {
+            const presets = {
+                'max': { sensitivity: 0xFF, scaling: 0x0F },
+                'high': { sensitivity: 0xB7, scaling: 0x0E },
+                'medium': { sensitivity: 0x84, scaling: 0x0F },
+                'min': { sensitivity: 0x29, scaling: 0x00 }
+            };
+
+            if (presets[level]) {
+                document.getElementById('sensitivity').value = presets[level].sensitivity;
+                document.getElementById('scaling').value = presets[level].scaling;
+                document.getElementById('sensitivityValue').textContent = presets[level].sensitivity;
+                document.getElementById('scalingValue').textContent = presets[level].scaling;
+                await setSensitivity();
+            }
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize event listeners for buttons
+            document.getElementById('scanButton').addEventListener('click', scanForDevices);
+            document.getElementById('connectButton').addEventListener('click', connectToMac);
+            document.getElementById('disconnectButton').addEventListener('click', disconnect);
+
+            // Initialize sliders with Materialize
+            const sliders = document.querySelectorAll('input[type=range]');
+            M.Range.init(sliders);
+
+            // Add event listeners for value displays
+            const sliderConfig = {
+                'brightness': { display: 'brightnessValue', max: 255 },
+                'intensity': { display: 'intensityValue', max: 15 },
+                'sensitivity': { display: 'sensitivityValue', max: 255 },
+                'scaling': { display: 'scalingValue', max: 15 }
+            };
+
+            Object.entries(sliderConfig).forEach(([sliderId, config]) => {
+                const slider = document.getElementById(sliderId);
+                const display = document.getElementById(config.display);
+                slider.addEventListener('input', () => {
+                    display.textContent = slider.value;
+                });
+            });
+
+            // Initialize color picker and preview
+            const colorPicker = document.getElementById('colorPicker');
+            colorPicker.value = '#ff0000'; // Set initial color
+            updateColor(); // Update color preview
+
+            // Check Web Bluetooth support
+            if (!navigator.bluetooth) {
+                showStatus('Web Bluetooth is not supported in your browser. Please use Chrome, Edge, or another compatible browser.', true);
+                setControlsState(false);
+            }
+
+            // Add tooltips to buttons
+            document.querySelectorAll('.btn, .btn-large').forEach(btn => {
+                if (btn.textContent.trim()) {
+                    M.Tooltip.init(btn, {
+                        position: 'top',
+                        html: btn.textContent.trim()
+                    });
+                }
+            });
         });
 
-        // Set up event listeners
-        document.getElementById('connectButton').addEventListener('click', connect);
-        document.getElementById('disconnectButton').addEventListener('click', disconnect);
-
-        // Check if Web Bluetooth is supported
-        if (!navigator.bluetooth) {
-            showStatus('Web Bluetooth is not supported in your browser. Please use Chrome, Edge, or another compatible browser.', true);
+        // Helper function to format values as hex
+        function toHex(value) {
+            return value.toString(16).padStart(2, '0').toUpperCase();
         }
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            if (!rxCharacteristic) return; // Only process if connected
+            
+            switch(event.key.toLowerCase()) {
+                case 'o': // Toggle power
+                    if (event.ctrlKey) {
+                        sendCommand('power', true);
+                    }
+                    break;
+                case 'f': // Toggle power off
+                    if (event.ctrlKey) {
+                        sendCommand('power', false);
+                    }
+                    break;
+                case 'm': // Cycle through music modes
+                    if (event.ctrlKey) {
+                        const currentMode = (parseInt(localStorage.getItem('currentMusicMode') || '0') % 4) + 1;
+                        setMusicMode(currentMode);
+                        localStorage.setItem('currentMusicMode', currentMode);
+                    }
+                    break;
+            }
+        });
+
+        // Add floating action button for quick actions
+        const fab = document.createElement('div');
+        fab.className = 'fixed-action-btn';
+        fab.innerHTML = `
+            <a class="btn-floating btn-large red">
+                <i class="large material-icons">menu</i>
+            </a>
+            <ul>
+                <li><a class="btn-floating red" onclick="sendCommand('power', true)"><i class="material-icons">power</i></a></li>
+                <li><a class="btn-floating yellow darken-1" onclick="sendCommand('power', false)"><i class="material-icons">power_off</i></a></li>
+                <li><a class="btn-floating green" onclick="document.getElementById('colorPicker').click()"><i class="material-icons">color_lens</i></a></li>
+                <li><a class="btn-floating blue" onclick="setMusicMode(1)"><i class="material-icons">music_note</i></a></li>
+            </ul>
+        `;
+        document.body.appendChild(fab);
+
+        // Initialize floating action button
+        document.addEventListener('DOMContentLoaded', function() {
+            const elems = document.querySelectorAll('.fixed-action-btn');
+            M.FloatingActionButton.init(elems, {
+                direction: 'left',
+                hoverEnabled: false
+            });
+        });
     </script>
 </body>
 </html>
